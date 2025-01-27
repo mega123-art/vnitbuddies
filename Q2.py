@@ -1,1 +1,0 @@
-print("Team VNIT Buddies")
