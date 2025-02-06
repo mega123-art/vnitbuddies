@@ -1,21 +1,26 @@
-def day_of_week(day, month, year):
-    # If the date is in January or February, treat it as part of the previous year
-    if month < 3:
-        month += 12
-        year -= 1
-    
-    # Apply the Zeller's formula
-    h = (day + (13 * (month + 1)) // 5 + year + year // 4 - year // 100 + year // 400) % 7
-    
-    # Map the number to a day of the week
-    days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    
-    return days[h]
+def is_leap_year(year):
+    return (year % 400 == 0) or (year % 4 == 0 and year % 100 != 0)
 
-# Get the date from the user
-day = int(input("Enter the day of the month (e.g., 20): "))
-month = int(input("Enter the month (1 for January, 2 for February, etc.): "))
-year = int(input("Enter the year (e.g., 1969): "))
+def days_in_given_year(year):
+    return 366 if is_leap_year(year) else 365
 
-# Call the function and display the result
-print(f"The day of the week on {month}/{day}/{year} was {day_of_week(day, month, year)}.")
+def find_day_of_week(day, month, year):
+    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+    if is_leap_year(year):
+        days_in_month[1] = 29
+
+    total_days = day - 1
+
+    total_days += sum(days_in_month[:month - 1])
+
+    for y in range(1, abs(year)):
+        total_days += days_in_given_year(y) if year > 0 else -days_in_given_year(-y)
+
+    return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][total_days % 7]
+
+
+day = int(input("Enter day: "))
+month = int(input("Enter month: "))
+year = int(input("Enter year: "))
+print(f"The day is {find_day_of_week(day, month, year)}.")
