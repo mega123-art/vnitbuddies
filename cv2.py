@@ -27,3 +27,5 @@ output_gif = "Output.gif"
 imageio.mimsave(output_gif, processed_frames, duration=0.1)  # Adjust duration as needed
 
 print("Thresholded GIF saved as:", output_gif)
+
+# Need to see Otsu Method to do Thresholding foe better work improvemt of image processing
