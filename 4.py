@@ -1,121 +1,103 @@
-#include <stdio.h>
+# Define constants
+GRID_SIZE = 6
+MAX_CAGES = 10
 
-#define SIZE 6
-#define MAX_CAGES 10
+# Define the Cage structure
+class Cage:
+    def __init__(self, target, operation, cells):
+        self.target = target  # Target value for the cage
+        self.operation = operation  # Logical operation: 'A' (AND), 'O' (OR), 'X' (XOR)
+        self.cells = cells  # List of cells (as tuples of row, column) in the cage
 
-typedef struct {
-    int target;
-    char operation;
-    int cells[SIZE][2];
-    int cell_count;
-} Cage;
+# Function to apply logical operations
+def apply_logic(operation, values):
+    if operation == 'A':  # AND operation
+        result = 1
+        for value in values:
+            result &= value
+        return result
+    elif operation == 'O':  # OR operation
+        result = 0
+        for value in values:
+            result |= value
+        return result
+    elif operation == 'X':  # XOR operation
+        result = 0
+        for value in values:
+            result ^= value
+        return result
+    else:
+        return -1  # Invalid operation
 
-int grid[SIZE][SIZE];
-Cage cages[MAX_CAGES];
-int cage_count;
+# Function to check if the grid satisfies all cage constraints
+def is_grid_valid(grid, cages):
+    for cage in cages:
+        values = []
+        for (row, col) in cage.cells:
+            if grid[row][col] == -1:
+                return True  # If any cell is empty, the grid is still potentially valid
+            values.append(grid[row][col])
+        if apply_logic(cage.operation, values) != cage.target:
+            return False  # Cage constraint is not satisfied
+    return True  # All cage constraints are satisfied
 
-// Function to apply logic operations
-int apply_logic(char op, int values[], int count) {
-    int result;
-    if (op == 'A') {
-        result = 1;
-        for (int i = 0; i < count; i++) {
-            result &= values[i];
-        }
-    } else if (op == 'O') {
-        result = 0;
-        for (int i = 0; i < count; i++) {
-            result |= values[i];
-        }
-    } else if (op == 'X') {
-        result = 0;
-        for (int i = 0; i < count; i++) {
-            result ^= values[i];
-        }
-    } else {
-        return -1; 
-    }
-    return result;
-}
-
-// Function to check if the grid follows constraints
-int is_valid_grid() {
-    for (int c = 0; c < cage_count; c++) {
-        int values[SIZE], count = 0;
-        for (int i = 0; i < cages[c].cell_count; i++) {
-            int r = cages[c].cells[i][0], col = cages[c].cells[i][1];
-            if (grid[r][col] == -1) {
-                return 1;
-            }
-            values[count++] = grid[r][col];
-        }
-        if (apply_logic(cages[c].operation, values, count) != cages[c].target) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-// Function to solve the grid using backtracking
-int solve_grid(int r, int c) {
-    if (r == SIZE) {
-        return is_valid_grid();
-    }
+# Backtracking solver function
+def solve_grid(grid, cages, row=0, col=0):
+    # Base case: If we've reached the end of the grid, check if it's valid
+    if row == GRID_SIZE:
+        return is_grid_valid(grid, cages)
     
-    int next_r, next_c;
-    if (c == SIZE - 1) {
-        next_r = r + 1;
-        next_c = 0;
-    } else {
-        next_r = r;
-        next_c = c + 1;
-    }
+    # Calculate the next cell to move to
+    next_row, next_col = (row, col + 1) if col < GRID_SIZE - 1 else (row + 1, 0)
     
-    if (grid[r][c] != -1) {
-        return solve_grid(next_r, next_c);
-    }
+    # If the current cell is already filled, move to the next cell
+    if grid[row][col] != -1:
+        return solve_grid(grid, cages, next_row, next_col)
     
-    for (int val = 0; val <= 1; val++) {
-        grid[r][c] = val;
-        if (is_valid_grid() && solve_grid(next_r, next_c)) {
-            return 1;
-        }
-        grid[r][c] = -1;
-    }
-    return 0;
-}
+    # Try placing 0 and 1 in the current cell
+    for value in [0, 1]:
+        grid[row][col] = value
+        if is_grid_valid(grid, cages) and solve_grid(grid, cages, next_row, next_col):
+            return True  # Solution found
+        grid[row][col] = -1  # Backtrack
+    
+    return False  # No solution found
 
-int main() {
-    printf("Enter the 6x6 grid (-1 for empty cells):\n");
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            scanf("%d", &grid[i][j]);
-        }
-    }
+# Main function
+def main():
+    # Initialize the grid with empty cells (-1)
+    grid = [[-1 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
     
-    printf("Enter number of cages: ");
-    scanf("%d", &cage_count);
+    # Input the grid
+    print("Enter the 6x6 grid (-1 for empty cells):")
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
+            grid[row][col] = int(input(f"Enter value for cell ({row}, {col}): "))
     
-    for (int i = 0; i < cage_count; i++) {
-        printf("Enter target, operation (A/O/X), and cell count: ");
-        scanf("%d %c %d", &cages[i].target, &cages[i].operation, &cages[i].cell_count);
-        for (int j = 0; j < cages[i].cell_count; j++) {
-            printf("Enter cell (row col): ");
-            scanf("%d %d", &cages[i].cells[j][0], &cages[i].cells[j][1]);
-        }
-    }
+    # Input the number of cages
+    cage_count = int(input("Enter the number of cages: "))
+    cages = []
     
-    if (solve_grid(0, 0)) {
-        printf("Solved Grid:\n");
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                printf("%d ", grid[i][j]);
-            }
-            printf("\n");
-        }
-    } else {
-        printf("NO SOLUTION\n");
-    }
-    return 0;
-}
+    # Input details for each cage
+    for i in range(cage_count):
+        target = int(input(f"Enter target value for cage {i + 1}: "))
+        operation = input(f"Enter operation for cage {i + 1} (A for AND, O for OR, X for XOR): ").upper()
+        cell_count = int(input(f"Enter the number of cells in cage {i + 1}: "))
+        cells = []
+        for j in range(cell_count):
+            row = int(input(f"Enter row for cell {j + 1} in cage {i + 1}: "))
+            col = int(input(f"Enter column for cell {j + 1} in cage {i + 1}: "))
+            cells.append((row, col))
+        cages.append(Cage(target, operation, cells))
+    
+    # Solve the grid
+    if solve_grid(grid, cages):
+        print("Solved Grid:")
+        for row in grid:
+            print(" ".join(map(str, row)))
+    else:
+        print("NO SOLUTION")
 
+# Run the program
+if __name__ == "__main__":
+    main()
