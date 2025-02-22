@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def load_image(image_path):
+def load_image(C:\Users\deven\OneDrive\Desktop\Documents\Pictures\c.png):
     """Loads an image from the given path."""
     image = cv2.imread(image_path)
     if image is None:
